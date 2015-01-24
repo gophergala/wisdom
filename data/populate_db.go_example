@@ -22,7 +22,7 @@ type Author struct {
 
 type Tag struct {
 	Id    int    `json:"id"`
-	Lable string `json:"lable"`
+	Label string `json:"label"`
 }
 
 type Quote struct {
@@ -136,38 +136,38 @@ func main() {
 	}
 
 	tags := []Tag{
-		{Lable: "launch"},       // 0
-		{Lable: "product"},      // 1
-		{Lable: "500 Startups"}, // 2
-		{Lable: "original"},     // 3
-		{Lable: "creativity"},   // 4
-		{Lable: "design"},       // 5
-		{Lable: "yc"},           // 6
-		{Lable: "y combinator"}, // 7
-		{Lable: "tumblr"},       // 8
-		{Lable: "feature"},      // 9
-		{Lable: "google"},       // 10
-		{Lable: "idea"},         // 11
-		{Lable: "market"},       // 12
-		{Lable: "failure"},      // 13
-		{Lable: "wrong"},        // 14
-		{Lable: "mistake"},      // 15
-		{Lable: "right"},        // 16
-		{Lable: "learn"},        // 17
-		{Lable: "ceo"},          // 18
-		{Lable: "sacrifice"},    // 19
-		{Lable: "apple"},        // 20
-		{Lable: "better"},       // 21
-		{Lable: "classic"},      // 22
-		{Lable: "try"},          // 23
-		{Lable: "regret"},       // 24
-		{Lable: "entrepreneur"}, // 25
-		{Lable: "founder"},      // 26
-		{Lable: "change"},       // 27
-		{Lable: "work"},         // 28
-		{Lable: "courage"},      // 29
-		{Lable: "life"},         // 30
-		{Lable: "enthusiasm"},   // 31
+		{Label: "launch"},       // 0
+		{Label: "product"},      // 1
+		{Label: "500 Startups"}, // 2
+		{Label: "original"},     // 3
+		{Label: "creativity"},   // 4
+		{Label: "design"},       // 5
+		{Label: "yc"},           // 6
+		{Label: "y combinator"}, // 7
+		{Label: "tumblr"},       // 8
+		{Label: "feature"},      // 9
+		{Label: "google"},       // 10
+		{Label: "idea"},         // 11
+		{Label: "market"},       // 12
+		{Label: "failure"},      // 13
+		{Label: "wrong"},        // 14
+		{Label: "mistake"},      // 15
+		{Label: "right"},        // 16
+		{Label: "learn"},        // 17
+		{Label: "ceo"},          // 18
+		{Label: "sacrifice"},    // 19
+		{Label: "apple"},        // 20
+		{Label: "better"},       // 21
+		{Label: "classic"},      // 22
+		{Label: "try"},          // 23
+		{Label: "regret"},       // 24
+		{Label: "entrepreneur"}, // 25
+		{Label: "founder"},      // 26
+		{Label: "change"},       // 27
+		{Label: "work"},         // 28
+		{Label: "courage"},      // 29
+		{Label: "life"},         // 30
+		{Label: "enthusiasm"},   // 31
 	}
 
 	quotes := []Quote{
@@ -309,5 +309,104 @@ func main() {
 		},
 	}
 
-	// TODO: add to database
+	// Insert data into authors table
+	stmtAuthor, err := db.Prepare("INSERT INTO authors(name,company_name,twitter_username) VALUES ($1,$2,$3)")
+	if err != nil {
+		log.Println(err)
+	}
+
+	for _, author := range authors {
+		_, err = stmtAuthor.Exec(author.Name, author.Company, author.Twitter)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
+	// Insert data into tags table
+	stmtTag, err := db.Prepare("INSERT INTO tags(label) VALUES ($1)")
+	if err != nil {
+		log.Println(err)
+	}
+
+	for _, tag := range tags {
+		_, err = stmtTag.Exec(tag.Label)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
+	// Insert data into quotes table
+	stmtQuote, err := db.Prepare("INSERT INTO quotes(author_id, post_id, content, permalink, picture_url) VALUES ($1, $2, $3, $4, $5)")
+	if err != nil {
+		log.Println(err)
+	}
+
+	// Insert data into quotes_tags table
+	stmtQuoteTag, err := db.Prepare("INSERT INTO quotes_tags(quote_id, tag_id) VALUES ($1, $2)")
+	if err != nil {
+		log.Println(err)
+	}
+
+	// query the id of author
+	stmtQueryAuthorId, err := db.Prepare("SELECT id FROM authors WHERE name = $1")
+	if err != nil {
+		log.Println(err)
+	}
+
+	// query the id of author
+	stmtQueryTagId, err := db.Prepare("SELECT id FROM tags WHERE label = $1")
+	if err != nil {
+		log.Println(err)
+	}
+
+	// query the id of quote
+	stmtQueryQuoteId, err := db.Prepare("SELECT id FROM quotes WHERE post_id = $1")
+	if err != nil {
+		log.Println(err)
+	}
+
+	for _, quote := range quotes {
+
+		// get the id of author first
+		var author_id int
+		err := stmtQueryAuthorId.QueryRow(quote.Author.Name).Scan(&author_id)
+		if err == sql.ErrNoRows {
+			log.Printf("No user with that ID.")
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		_, err = stmtQuote.Exec(author_id, quote.PostId, quote.Content, quote.Permalink, quote.PictureUrl)
+		if err != nil {
+			log.Println(err)
+		}
+
+		for _, tag := range quote.Tags {
+			// get the id of each tag
+			var tag_id int
+			err := stmtQueryTagId.QueryRow(tag.Label).Scan(&tag_id)
+			if err == sql.ErrNoRows {
+				log.Printf("No user with that ID.")
+			}
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			var quote_id int
+			err = stmtQueryQuoteId.QueryRow(quote.PostId).Scan(&quote_id)
+			if err == sql.ErrNoRows {
+				log.Printf("No user with that ID.")
+			}
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// then insert into database
+			_, err = stmtQuoteTag.Exec(quote_id, tag_id)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
 }
