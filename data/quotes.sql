@@ -6,5 +6,4 @@ CREATE TABLE IF NOT EXISTS quotes (
     content text NOT NULL,
     permalink text NOT NULL,
     picture_url text NOT NULL,
-    quote_number integer NOT NULL
 );
