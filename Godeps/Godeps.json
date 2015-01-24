@@ -1,0 +1,5 @@
+{
+	"ImportPath": "github.com/pyk/wisdom",
+	"GoVersion": "go1.3.3",
+	"Deps": []
+}
