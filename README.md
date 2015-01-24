@@ -57,6 +57,7 @@ TODO: add example of post response
 
 | Endpoint  | Description |
 | --------- | ------ |
+| `/v1/authors` | return an array of `author`|
 | `/v1/author/:twitter_username` | return an array of `object` that have given `:twitter_username`|
 | `/v1/author/:twitter_username/random` | return an `object` that have given `:twitter_username`|
 
@@ -68,6 +69,7 @@ TODO: add example of author response
 
 | Endpoint  | Description |
 | --------- | ------ |
+| `/v1/tags` | return an array of `tags`|
 | `/v1/tags/:tags` | return an array of `object` that have given `:tags`|
 | `/v1/tags/:tags/random` | return a random `object` that have given `:tags`|
 
