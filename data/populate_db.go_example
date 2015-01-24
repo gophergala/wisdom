@@ -1,0 +1,313 @@
+package main
+
+import (
+	"database/sql"
+	"log"
+	"os"
+
+	_ "github.com/lib/pq"
+)
+
+var (
+	DATABASE_URL = os.Getenv("DATABASE_URL")
+)
+
+type Author struct {
+	Id        int    `json:"id"`
+	AvatarUrl string `json:"avatar_url"`
+	Name      string `json:"name"`
+	Company   string `json:"company"`
+	Twitter   string `json:"twitter_username"`
+}
+
+type Tag struct {
+	Id    int    `json:"id"`
+	Lable string `json:"lable"`
+}
+
+type Quote struct {
+	Id         int    `json:"id"`
+	PostId     string `json:"post_id"`
+	Author     Author `json:"author"`
+	Content    string `json:"content"`
+	Permalink  string `json:"permalink"`
+	PictureUrl string `json:"picture_url"`
+	Tags       []Tag  `json:"tags"`
+}
+
+func main() {
+	log.Println("Opening connection to database ... ")
+	db, err := sql.Open("postgres", DATABASE_URL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Ping database connection to check connection are OK
+	log.Println("Ping database connection ... ")
+	err = db.Ping()
+	if err != nil {
+		log.Println("Ping database connection: failure :(")
+		log.Fatal(err)
+	}
+	log.Println("Ping database connection: success!")
+
+	// TODO: insert author
+	authors := []Author{
+		{
+			Name:    "Reid Hoffman",
+			Company: "Linkedin",
+			Twitter: "reidhoffman",
+		},
+		{
+			Name:    "Dave McClure",
+			Company: "500 Startups",
+			Twitter: "davemcclure",
+		},
+		{
+			Name:    "Paul Rand",
+			Company: "Apple",
+			Twitter: "",
+		},
+		{
+			Name:    "Paul Graham",
+			Company: "YCombinator",
+			Twitter: "paulg",
+		},
+		{
+			Name:    "David Karp",
+			Company: "Tumblr",
+			Twitter: "davidkarp",
+		},
+		{
+			Name:    "Larry Page",
+			Company: "Google",
+			Twitter: "",
+		},
+		{
+			Name:    "Fred Wilson",
+			Company: "Union Square Ventures",
+			Twitter: "fredwilson",
+		},
+		{
+			Name:    "Drew Houston",
+			Company: "Dropbox",
+			Twitter: "drewhouston",
+		},
+		{
+			Name:    "Ben Horowitz",
+			Company: "Andressen Horowitz",
+			Twitter: "bhorowitz",
+		},
+		{
+			Name:    "Jonathan Ive",
+			Company: "Apple",
+			Twitter: "",
+		},
+		{
+			Name:    "Jeff Bezos",
+			Company: "Amazon",
+			Twitter: "",
+		},
+		{
+			Name:    "Leslie Bradshaw",
+			Company: "JESS3",
+			Twitter: "lesliebradshaw",
+		},
+		{
+			Name:    "Mark Twain",
+			Company: "",
+			Twitter: "",
+		},
+		{
+			Name:    "Elon Musk",
+			Company: "SpaceX",
+			Twitter: "elonmusk",
+		},
+		{
+			Name:    "Marissa Mayer",
+			Company: "Yahoo",
+			Twitter: "marissamayer",
+		},
+		{
+			Name:    "Steve Jobs",
+			Company: "Apple",
+			Twitter: "",
+		},
+	}
+
+	tags := []Tag{
+		{Lable: "launch"},       // 0
+		{Lable: "product"},      // 1
+		{Lable: "500 Startups"}, // 2
+		{Lable: "original"},     // 3
+		{Lable: "creativity"},   // 4
+		{Lable: "design"},       // 5
+		{Lable: "yc"},           // 6
+		{Lable: "y combinator"}, // 7
+		{Lable: "tumblr"},       // 8
+		{Lable: "feature"},      // 9
+		{Lable: "google"},       // 10
+		{Lable: "idea"},         // 11
+		{Lable: "market"},       // 12
+		{Lable: "failure"},      // 13
+		{Lable: "wrong"},        // 14
+		{Lable: "mistake"},      // 15
+		{Lable: "right"},        // 16
+		{Lable: "learn"},        // 17
+		{Lable: "ceo"},          // 18
+		{Lable: "sacrifice"},    // 19
+		{Lable: "apple"},        // 20
+		{Lable: "better"},       // 21
+		{Lable: "classic"},      // 22
+		{Lable: "try"},          // 23
+		{Lable: "regret"},       // 24
+		{Lable: "entrepreneur"}, // 25
+		{Lable: "founder"},      // 26
+		{Lable: "change"},       // 27
+		{Lable: "work"},         // 28
+		{Lable: "courage"},      // 29
+		{Lable: "life"},         // 30
+		{Lable: "enthusiasm"},   // 31
+	}
+
+	quotes := []Quote{
+		{
+			PostId:     "51244720006",
+			Author:     authors[0],
+			Content:    "If you are not embarrassed by the first version of your product, you’ve launched too late.",
+			Permalink:  "http://startupquote.com/post/51244720006",
+			PictureUrl: "http://41.media.tumblr.com/7ed526e46ea63447d33d6261717a7cca/tumblr_mnbjpdMeS11qz6pqio1_r10_1280.png",
+			Tags:       []Tag{tags[0], tags[1]},
+		},
+		{
+			PostId:     "51277392517",
+			Author:     authors[1],
+			Content:    "A ‘startup’ is a company that is confused about - 1. What its product is, 2. Who its customers are. 3. How to make money.",
+			Permalink:  "http://startupquote.com/post/51277392517",
+			PictureUrl: "http://40.media.tumblr.com/be692017b2c9e1a87f7e45ae7b32305b/tumblr_mnc5n4sZCh1qz6pqio1_r2_1280.png",
+			Tags:       []Tag{tags[2]},
+		},
+		{
+			PostId:     "51317061316",
+			Author:     authors[2],
+			Content:    "Don’t try to be original, just try to be good.",
+			Permalink:  "http://startupquote.com/post/51317061316",
+			PictureUrl: "http://36.media.tumblr.com/a0c8d1e3d893e58fe550553f7b77bfab/tumblr_mnd8p82Bvk1qz6pqio1_r2_1280.png",
+			Tags:       []Tag{tags[3], tags[4], tags[5]},
+		},
+		{
+			PostId:     "51361136529",
+			Author:     authors[3],
+			Content:    "It’s better to make a few people really happy than to make a lot of people semi-happy.",
+			Permalink:  "http://startupquote.com/post/51361136529",
+			PictureUrl: "http://40.media.tumblr.com/20f373018d560b2f85f11bf0f354c5be/tumblr_mne33oJWpI1qz6pqio1_r2_1280.png",
+			Tags:       []Tag{tags[6], tags[7]},
+		},
+		{
+			PostId:     "51487482834",
+			Author:     authors[4],
+			Content:    "Every feature has some maintenance cost, and having fewer features lets us focus on the ones we care about and make sure they work very well.",
+			Permalink:  "http://startupquote.com/post/51361136529",
+			PictureUrl: "http://41.media.tumblr.com/e0951e009eaf1755b85bc9c20dce1e3f/tumblr_mngxfx8Uni1qz6pqio1_r2_1280.png",
+			Tags:       []Tag{tags[8], tags[9], tags[5], tags[2]},
+		},
+		{
+			PostId:     "51548050812",
+			Author:     authors[5],
+			Content:    "You don’t need to have a 100-person company to develop that idea.",
+			Permalink:  "http://startupquote.com/post/51548050812",
+			PictureUrl: "http://41.media.tumblr.com/1da0776e195d52b97a73980c4b38d810/tumblr_mni3jgs0ZI1qz6pqio1_r2_1280.png",
+			Tags:       []Tag{tags[10], tags[11]},
+		},
+		{
+			PostId:     "51885129757",
+			Author:     authors[6],
+			Content:    "Markets come and go. Good business don’t.",
+			Permalink:  "http://startupquote.com/post/51885129757",
+			PictureUrl: "http://40.media.tumblr.com/e54d7391de5f8f1c90527d72c869a98a/tumblr_mnpz0vRcgx1qz6pqio1_r2_1280.png",
+			Tags:       []Tag{tags[10], tags[11]},
+		},
+		{
+			PostId:     "51886155003",
+			Author:     authors[7],
+			Content:    "Don’t worry about failure, you only have to be right once.",
+			Permalink:  "http://startupquote.com/post/51886155003",
+			PictureUrl: "http://40.media.tumblr.com/3421da78b1656c50c38756a085743ab0/tumblr_mnpzskORmc1qz6pqio1_r3_1280.png",
+			Tags:       []Tag{tags[13], tags[14], tags[15], tags[16], tags[17]},
+		},
+		{
+			PostId:     "52557974856",
+			Author:     authors[8],
+			Content:    "As a startup CEO, I slept like a baby. I woke up every 2 hours and cried",
+			Permalink:  "http://startupquote.com/post/52557974856",
+			PictureUrl: "http://40.media.tumblr.com/103708b6f21e6eee5907cad47b74422e/tumblr_mo4zt53LVD1qz6pqio1_r2_1280.png",
+			Tags:       []Tag{tags[18], tags[19]},
+		},
+		{
+			PostId:     "52951720469",
+			Author:     authors[9],
+			Content:    "It’s very easy to be different, but very difficult to be better.",
+			Permalink:  "http://startupquote.com/post/52951720469",
+			PictureUrl: "http://36.media.tumblr.com/c2cd97e2b88a8b717d1942f2db47b10b/tumblr_moe3wp4Nbd1qz6pqio1_r4_1280.png",
+			Tags:       []Tag{tags[20], tags[21], tags[22]},
+		},
+		{
+			PostId:     "53067339332",
+			Author:     authors[10],
+			Content:    "I knew that if I failed I wouldn’t regret that, but I knew the one thing I might regret is not trying.",
+			Permalink:  "http://startupquote.com/post/53067339332",
+			PictureUrl: "http://36.media.tumblr.com/92fa0a0c8ae956db4885e95e5dbeba91/tumblr_mogqbtdLkz1qz6pqio1_r3_1280.png",
+			Tags:       []Tag{tags[18], tags[23], tags[24]},
+		},
+		{
+			PostId:     "104295139271",
+			Author:     authors[3],
+			Content:    "Startups don’t win by attacking. They win by transcending. There are exceptions of course, but usually the way to win is to race ahead, not to stop & fight.",
+			Permalink:  "http://startupquote.com/post/104295139271",
+			PictureUrl: "http://40.media.tumblr.com/bbcf37fe33dfc751d9bad3ea43f19e07/tumblr_ng1erd2dpk1qz6pqio1_1280.png",
+			Tags:       []Tag{tags[6], tags[7]},
+		},
+		{
+			PostId:     "104365553355",
+			Author:     authors[11],
+			Content:    "In my 20s I was thrashing around in the water, trying to keep my head above it. In my 30s, I realized it was only three feet deep and I stood up.",
+			Permalink:  "http://startupquote.com/post/104365553355",
+			PictureUrl: "http://36.media.tumblr.com/bc0698c00b443d0e5c6b9b814d74bbd9/tumblr_nfywvtqr2C1qz6pqio1_r1_1280.png",
+			Tags:       []Tag{tags[25], tags[26]},
+		},
+		{
+			PostId:     "86108164946",
+			Author:     authors[12],
+			Content:    "Whenever you find yourself on the side of the majority, it is time to pause and reflect.",
+			Permalink:  "http://startupquote.com/post/86108164946",
+			PictureUrl: "http://40.media.tumblr.com/28981e43f507c084939631f8896bd657/tumblr_n5rx8kmrtz1qz6pqio1_1280.png",
+			Tags:       []Tag{tags[22], tags[27]},
+		},
+		{
+			PostId:     "83123874470",
+			Author:     authors[13],
+			Content:    "Optimism, pessimism, f**k that; we’re going to make it happen. As God is my bloody witness, I’m hell-bent on making it work.",
+			Permalink:  "http://startupquote.com/post/83123874470",
+			PictureUrl: "http://40.media.tumblr.com/9a8853151648a911fd09735c2d6a61b5/tumblr_n48rj4W4AS1qz6pqio1_1280.png",
+			Tags:       []Tag{tags[22], tags[28]},
+		},
+		{
+			PostId:     "82186818622",
+			Author:     authors[14],
+			Content:    "When there’s that moment of ‘Wow, I’m not really sure I can do this,’ and you push through those moments, that’s when you have a breakthrough.",
+			Permalink:  "http://startupquote.com/post/82186818622",
+			PictureUrl: "http://40.media.tumblr.com/0eac955ef94f7d0620be74952d1b787a/tumblr_n3rjhfHyU61qz6pqio2_r1_1280.png",
+			Tags:       []Tag{tags[22], tags[29]},
+		},
+		{
+			PostId:     "81784898975",
+			Author:     authors[15],
+			Content:    "Your work is going to fill a large part of your life, and the only way to be truly satisfied is to do what you believe is great work. And the only way to do great work is to love what you do.",
+			Permalink:  "http://startupquote.com/post/81784898975",
+			PictureUrl: "http://41.media.tumblr.com/0915e5401eb9a4e0e01e27c525198562/tumblr_n3keo0aVDc1qz6pqio1_r1_1280.png",
+			Tags:       []Tag{tags[22], tags[28], tags[30], tags[31]},
+		},
+	}
+
+	// TODO: add to database
+}
