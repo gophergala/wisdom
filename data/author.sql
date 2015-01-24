@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS authors (
     avatar_url text NOT NULL,
     name varchar(50) NOT NULL,
     company_name varchar(50) NOT NULL,
-    twitter_username varchar(16)
+    twitter_username varchar(15) NOT NULL
 );
