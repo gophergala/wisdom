@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS quotes (
     post_id text NOT NULL,
     content text NOT NULL,
     permalink text NOT NULL,
-    picture_url text NOT NULL,
+    picture_url text NOT NULL
 );
