@@ -1,2 +1,3 @@
 bin/
 data/populate_db.go
+gh-pages/
