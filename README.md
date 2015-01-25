@@ -1,20 +1,24 @@
 # Wisdom
 
-Wisdom is an open API for [startupquote.com](http://startupquote.com/).
+Wisdom is a [Startup Quote](http://startupquote.com) API.
 
-The idea was to provide an access to famous quote from startup ecosystem 
-that can resused by developer inside their apps.
+The idea is to provide an access to famous quote by people from startup 
+ecosystem that can resused by developer inside their apps.
+
+Potential apps is like [Product Hunt](www.producthunt.com), [Beta List](http://betalist.com) 
+and other related tech, startup, business site.
 
 ## Mission
 
 1. Simple
-2. Fast (because it's written in [Go](http://golang.or))
+2. Fast (because it's written in [Go](http://golang.org))
 3. Open for everyone (no authentication required)
 
 ## API
 
 ### Object
-`quote` has the following form
+#### Quote
+example
 
 ```json
 {
@@ -43,7 +47,8 @@ that can resused by developer inside their apps.
 }
 ```
 
-`author` has the following form
+#### Author
+example
 
 ```json
 {
@@ -55,7 +60,8 @@ that can resused by developer inside their apps.
 }
 ```
 
-`tag` has the following form
+#### Tag
+example
 
 ```json
 {
@@ -104,7 +110,7 @@ GET https://wisdomapi.herokuapp.com/v1/author/paulg/random
 
 | Endpoint  | Description |
 | --------- | ------ |
-| `/v1/tags` | return an array of `tags`|
+| `/v1/tags` | return an array of `tag`|
 
 #### Example request
 
