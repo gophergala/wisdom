@@ -66,7 +66,13 @@ TODO: add example of post response
 
 `:twitter_username` is a string
 
-TODO: add example of author response
+Example request:
+
+```
+# Authors
+curl -i -H "Accept: application/json" -X GET https://wisdomapi.herokuapp.com/v1/authors
+```
+
 
 ### Tag
 
