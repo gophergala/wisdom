@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -245,6 +246,26 @@ func randomHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtil
 	}
 	quote.Tags = tags
 
+	// JSONP response
+	query := r.URL.Query()
+	jsonp := query.Get("jsonp")
+	callback := query.Get("callback")
+	if callback != "" || jsonp != "" {
+		jsonResult, err := json.Marshal(quote)
+		if err != nil {
+			log.Println(err)
+		}
+		if callback != "" {
+			fmt.Fprintf(w, "%s(%s)", callback, jsonResult)
+			return nil
+		}
+
+		if jsonp != "" {
+			fmt.Fprintf(w, "%s(%s)", jsonp, jsonResult)
+			return nil
+		}
+	}
+
 	// write json to response
 	// response JSON
 	randomResp := json.NewEncoder(w)
@@ -304,6 +325,26 @@ func authorsHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUti
 			author.Twitter = ""
 		}
 		authors = append(authors, author)
+	}
+
+	// JSONP response
+	query := r.URL.Query()
+	jsonp := query.Get("jsonp")
+	callback := query.Get("callback")
+	if callback != "" || jsonp != "" {
+		jsonResult, err := json.Marshal(authors)
+		if err != nil {
+			log.Println(err)
+		}
+		if callback != "" {
+			fmt.Fprintf(w, "%s(%s)", callback, jsonResult)
+			return nil
+		}
+
+		if jsonp != "" {
+			fmt.Fprintf(w, "%s(%s)", jsonp, jsonResult)
+			return nil
+		}
 	}
 
 	// response json
@@ -456,6 +497,26 @@ func authorTwitterHandler(w http.ResponseWriter, r *http.Request, dbUtils *Datab
 		quotes = append(quotes, quote)
 	}
 
+	// JSONP response
+	query := r.URL.Query()
+	jsonp := query.Get("jsonp")
+	callback := query.Get("callback")
+	if callback != "" || jsonp != "" {
+		jsonResult, err := json.Marshal(quotes)
+		if err != nil {
+			log.Println(err)
+		}
+		if callback != "" {
+			fmt.Fprintf(w, "%s(%s)", callback, jsonResult)
+			return nil
+		}
+
+		if jsonp != "" {
+			fmt.Fprintf(w, "%s(%s)", jsonp, jsonResult)
+			return nil
+		}
+	}
+
 	// response JSON
 	quotesResp := json.NewEncoder(w)
 	err = quotesResp.Encode(quotes)
@@ -606,10 +667,31 @@ func authorTwitterRandomHandler(w http.ResponseWriter, r *http.Request, dbUtils 
 		quotes = append(quotes, quote)
 	}
 
-	// response JSON
-	quotesResp := json.NewEncoder(w)
 	rand.Seed(time.Now().UTC().UnixNano())
 	random := rand.Intn(len(quotes))
+
+	// JSONP response
+	query := r.URL.Query()
+	jsonp := query.Get("jsonp")
+	callback := query.Get("callback")
+	if callback != "" || jsonp != "" {
+		jsonResult, err := json.Marshal(quotes[random])
+		if err != nil {
+			log.Println(err)
+		}
+		if callback != "" {
+			fmt.Fprintf(w, "%s(%s)", callback, jsonResult)
+			return nil
+		}
+
+		if jsonp != "" {
+			fmt.Fprintf(w, "%s(%s)", jsonp, jsonResult)
+			return nil
+		}
+	}
+
+	// response JSON
+	quotesResp := json.NewEncoder(w)
 	err = quotesResp.Encode(quotes[random])
 	if err != nil {
 		return &apiError{
@@ -652,6 +734,27 @@ func tagsHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtils)
 		tag.Label = tag_label
 		tags = append(tags, tag)
 	}
+
+	// JSONP response
+	query := r.URL.Query()
+	jsonp := query.Get("jsonp")
+	callback := query.Get("callback")
+	if callback != "" || jsonp != "" {
+		jsonResult, err := json.Marshal(tags)
+		if err != nil {
+			log.Println(err)
+		}
+		if callback != "" {
+			fmt.Fprintf(w, "%s(%s)", callback, jsonResult)
+			return nil
+		}
+
+		if jsonp != "" {
+			fmt.Fprintf(w, "%s(%s)", jsonp, jsonResult)
+			return nil
+		}
+	}
+
 	// response JSON
 	tagsResp := json.NewEncoder(w)
 	err = tagsResp.Encode(tags)
