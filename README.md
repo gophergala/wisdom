@@ -61,38 +61,33 @@ that can resused by developer inside their apps.
 | --------- | ------ |
 | `/v1/random` | return a random `quote`|
 
-example valid request are:
+#### Example request
 
 ```
-curl -i -H "Accept: application/json" -X GET https://wisdomapi.herokuapp.com/v1/random
+GET https://wisdomapi.herokuapp.com/v1/random
 ```
-
-### Post
-
-| Endpoint  | Description |
-| --------- | ------ |
-| `/v1/post/:id` | return an `object` that have given `:id`|
-
-`:id` is a integer
-
-TODO: add example of post response
-
 
 ### Author
 
 | Endpoint  | Description |
 | --------- | ------ |
 | `/v1/authors` | return an array of `author`|
-| `/v1/author/:twitter_username` | return an array of `quote` that have given `:twitter_username`|
-| `/v1/author/:twitter_username/random` | return a random `quote` that have given `:twitter_username`|
+| `/v1/author/:twitter_username` | return an array of `quote` by author that have given `:twitter_username`. If author doesn't have twitter account response will be 404|
+| `/v1/author/:twitter_username/random` | return a random `quote` by authot that have given `:twitter_username`. If author only have 1 quote the response will be exactly the same, not random.|
 
 `:twitter_username` is a string
 
-Example request:
+#### Example request
 
 ```
-# Authors
-curl -i -H "Accept: application/json" -X GET https://wisdomapi.herokuapp.com/v1/authors
+# List of author
+GET https://wisdomapi.herokuapp.com/v1/authors
+
+# List of quotes by Paul Graham (@paulg)
+GET https://wisdomapi.herokuapp.com/v1/author/paulg
+
+# Random quote by Paul Graham (@paulg)
+GET https://wisdomapi.herokuapp.com/v1/author/paulg/random
 ```
 
 
