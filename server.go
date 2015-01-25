@@ -60,6 +60,7 @@ type DatabaseUtils struct {
 	StatementAuthors                 *sql.Stmt
 	StatementAuthorByTwitterUsername *sql.Stmt
 	StatementQuotesByAuthorId        *sql.Stmt
+	StatementTags                    *sql.Stmt
 }
 
 // ApiHandler global API mux
@@ -621,6 +622,50 @@ func authorTwitterRandomHandler(w http.ResponseWriter, r *http.Request, dbUtils 
 	return nil
 }
 
+// tags handler
+func tagsHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtils) *apiError {
+	// get the tags
+	var tags []Tag
+	tagsRows, err := dbUtils.StatementTags.Query()
+	if err != nil {
+		return &apiError{
+			"tagsHandler.tagsRows.err!=nil",
+			err,
+			"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			http.StatusInternalServerError,
+		}
+	}
+	defer tagsRows.Close()
+	for tagsRows.Next() {
+		var tag Tag
+		var tag_id int
+		var tag_label string
+		if err := tagsRows.Scan(&tag_id, &tag_label); err != nil {
+			return &apiError{
+				"tagsHandler.tagsRows.Scan",
+				err,
+				"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+				http.StatusInternalServerError,
+			}
+		}
+		tag.Id = tag_id
+		tag.Label = tag_label
+		tags = append(tags, tag)
+	}
+	// response JSON
+	tagsResp := json.NewEncoder(w)
+	err = tagsResp.Encode(tags)
+	if err != nil {
+		return &apiError{
+			"tagsHandler.tagsResp.Err",
+			err,
+			"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			http.StatusInternalServerError,
+		}
+	}
+	return nil
+}
+
 func main() {
 	log.Println("Opening connection to database ... ")
 	db, err := sql.Open("postgres", DATABASE_URL)
@@ -709,6 +754,17 @@ func main() {
 		StatementTagById:                 stmtQueryTagById,
 	}
 	r.Handle("/v1/author/{twitter_username}/random", ApiHandler{authorTwitterRandomDBUtils, authorTwitterRandomHandler})
+
+	// tags handler
+	stmtQueryTags, err := db.Prepare("SELECT * FROM tags")
+	if err != nil {
+		log.Println(err)
+	}
+
+	tagsDBUtils := &DatabaseUtils{
+		StatementTags: stmtQueryTags,
+	}
+	r.Handle("/v1/tags", ApiHandler{tagsDBUtils, tagsHandler})
 
 	// not found handler
 	r.NotFoundHandler = ApiHandler{Handler: notFoundHandler}
