@@ -113,6 +113,150 @@ func indexHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtils
 	return nil
 }
 
+// response random quotes
+func randomHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtils) *apiError {
+	// get the quote
+	var quote_id, quote_author_id int
+	var post_id, content, permalink, picture_url string
+	err := dbUtils.StatementRandom.QueryRow().Scan(&quote_id, &quote_author_id, &post_id, &content, &permalink, &picture_url)
+	if err == sql.ErrNoRows {
+		return &apiError{
+			Tag:     "quote.noRows",
+			Error:   err,
+			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			Code:    http.StatusNoContent,
+		}
+	}
+	if err != nil {
+		return &apiError{
+			Tag:     "quote.err!=nil",
+			Error:   err,
+			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			Code:    http.StatusNoContent,
+		}
+	}
+
+	quote := &Quote{
+		Id:         quote_id,
+		PostId:     post_id,
+		Content:    content,
+		Permalink:  permalink,
+		PictureUrl: picture_url,
+	}
+
+	// get the author
+	var author_id int
+	var avatar_url, name, company_name, twitter_username sql.NullString
+	err = dbUtils.StatementAuthorById.QueryRow(quote_author_id).Scan(&author_id, &avatar_url, &name, &company_name, &twitter_username)
+	if err == sql.ErrNoRows {
+		return &apiError{
+			Tag:     "author.noRows",
+			Error:   err,
+			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			Code:    http.StatusNoContent,
+		}
+	}
+	if err != nil {
+		return &apiError{
+			Tag:     "author.err!=nil",
+			Error:   err,
+			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			Code:    http.StatusNoContent,
+		}
+	}
+
+	author := Author{}
+	if avatar_url.Valid {
+		author.AvatarUrl = avatar_url.String
+	} else {
+		author.AvatarUrl = ""
+	}
+	if name.Valid {
+		author.Name = name.String
+	}
+	if company_name.Valid {
+		author.Company = company_name.String
+	} else {
+		author.Company = ""
+	}
+	if twitter_username.Valid {
+		author.Twitter = twitter_username.String
+	} else {
+		author.Twitter = ""
+	}
+
+	quote.Author = author
+
+	// get the tag ids
+	var tag_ids []int
+	rows, err := dbUtils.StatementTagsByQuoteId.Query(quote_id)
+	if err != nil {
+		return &apiError{
+			Tag:     "tags.rowsErr",
+			Error:   err,
+			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			Code:    http.StatusNoContent,
+		}
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var tag_id int
+		if err := rows.Scan(&tag_id); err != nil {
+			return &apiError{
+				Tag:     "tag.rows.Scan",
+				Error:   err,
+				Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+				Code:    http.StatusNoContent,
+			}
+		}
+		tag_ids = append(tag_ids, tag_id)
+	}
+
+	// get the tags
+	var tags []Tag
+	for _, tag_id := range tag_ids {
+		var mtag_id int
+		var mtag_label string
+		var tag Tag
+		err := dbUtils.StatementTagById.QueryRow(tag_id).Scan(&mtag_id, &mtag_label)
+		if err == sql.ErrNoRows {
+			return &apiError{
+				Tag:     "mtag.noRows",
+				Error:   err,
+				Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+				Code:    http.StatusNoContent,
+			}
+		}
+		if err != nil {
+			return &apiError{
+				Tag:     "mtag.err!=nil",
+				Error:   err,
+				Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+				Code:    http.StatusNoContent,
+			}
+		}
+		tag.Id = mtag_id
+		tag.Label = mtag_label
+		tags = append(tags, tag)
+	}
+	quote.Tags = tags
+
+	// write json to response
+	// response JSON
+	randomResp := json.NewEncoder(w)
+	random_err_json := randomResp.Encode(quote)
+	if random_err_json != nil {
+		log.Println("Encode JSON for error response was failed.")
+		return &apiError{
+			Tag:     "random_err_json.err!=nil",
+			Error:   err,
+			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			Code:    http.StatusNoContent,
+		}
+	}
+	return nil
+}
+
 func main() {
 	log.Println("Opening connection to database ... ")
 	db, err := sql.Open("postgres", DATABASE_URL)
@@ -131,6 +275,36 @@ func main() {
 
 	// index handler doesn't need database utils
 	http.Handle("/", ApiHandler{Handler: indexHandler})
+
+	// Random handler
+	// prepare a statement
+	stmtQueryRandomQuote, err := db.Prepare("SELECT * FROM quotes ORDER BY RANDOM() LIMIT 1")
+	if err != nil {
+		log.Println(err)
+	}
+
+	stmtQueryAuthor, err := db.Prepare("SELECT * FROM authors WHERE id = $1;")
+	if err != nil {
+		log.Println(err)
+	}
+
+	stmtQueryTagsByQuoteId, err := db.Prepare("SELECT tag_id FROM quotes_tags WHERE quote_id = $1")
+	if err != nil {
+		log.Println(err)
+	}
+
+	stmtQueryTagById, err := db.Prepare("SELECT * FROM tags WHERE id = $1")
+	if err != nil {
+		log.Println(err)
+	}
+
+	randomDBUtils := &DatabaseUtils{
+		StatementRandom:        stmtQueryRandomQuote,
+		StatementAuthorById:    stmtQueryAuthor,
+		StatementTagsByQuoteId: stmtQueryTagsByQuoteId,
+		StatementTagById:       stmtQueryTagById,
+	}
+	http.Handle("/v1/random", ApiHandler{randomDBUtils, randomHandler})
 
 	// server listener
 	log.Printf("Listening on :%s", PORT)
