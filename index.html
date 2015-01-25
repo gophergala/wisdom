@@ -29,11 +29,11 @@
                     <div class="col-lg-6 col-lg-offset-3">
                         <div class="row">
                             <div class="col-lg-6 col-sm-6 col-xs-6 pull-left">
-                                <p class="author-name">Paul Graham</p>
-                                <p class="company-name">YCombinator</p>
+                                <p class="author-name"></p>
+                                <p class="company-name"></p>
                             </div>
                             <div class="col-lg-3 col-sm-3 col-xs-4 pull-right">
-                                <a href="/" class="quote-permalink">
+                                <a href="/" class="quote-permalink hidden">
                                     <img class="startupquote-logo" src="http://static.tumblr.com/a388f480e725b85b7af0c7e24a8f0cd3/edv2u9o/20Pn3fq4w/tumblr_static_dark.png" alt="Startup Quote">
                                 </a>
                             </div>
@@ -43,7 +43,6 @@
                 <div class="row">
                     <div class="col-lg-6 col-lg-offset-3 quote-txt-container">
                         <h1 class="quote-content">
-                            Startups don’t win by attacking. They win by transcending. There are exceptions of course, but usually the way to win is to race ahead, not to stop &amp; fight.
                         </h1>
                     </div>
                 </div>
@@ -96,8 +95,9 @@
                         var content = $("h1.quote-content");
                         var permalink = $("a.quote-permalink");
 
+                        permalink.removeClass("hidden");
                         authorName.text(data.author.name);
-                        companyName.text(data.author.company_name);
+                        companyName.text(data.author.company);
                         content.text(data.content);
                         permalink.attr("href", data.permalink);
                     });
