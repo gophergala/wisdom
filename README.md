@@ -5,7 +5,7 @@ Wisdom is a [Startup Quote](http://startupquote.com) API.
 The idea is to provide an access to famous quote by people from startup 
 ecosystem that can resused by developer inside their apps.
 
-Potential apps is like [Product Hunt](www.producthunt.com), [Beta List](http://betalist.com) 
+Potential apps is like [Product Hunt](http://producthunt.com), [Beta List](http://betalist.com) 
 and other related tech, startup, business site.
 
 ## Mission
