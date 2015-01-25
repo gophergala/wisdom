@@ -121,18 +121,18 @@ func randomHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtil
 	err := dbUtils.StatementRandom.QueryRow().Scan(&quote_id, &quote_author_id, &post_id, &content, &permalink, &picture_url)
 	if err == sql.ErrNoRows {
 		return &apiError{
-			Tag:     "quote.noRows",
-			Error:   err,
-			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
-			Code:    http.StatusNoContent,
+			"randomHandler.StatementRandom.QueryRow.sql.ErrNoRows",
+			err,
+			"Quote not found",
+			http.StatusNotFound,
 		}
 	}
 	if err != nil {
 		return &apiError{
-			Tag:     "quote.err!=nil",
-			Error:   err,
-			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
-			Code:    http.StatusNoContent,
+			"randomHandler.StatementRandom.QueryRow.Err",
+			err,
+			"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			http.StatusInternalServerError,
 		}
 	}
 
@@ -151,29 +151,27 @@ func randomHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtil
 	err = dbUtils.StatementAuthorById.QueryRow(quote_author_id).Scan(&author_id, &avatar_url, &name, &company_name, &twitter_username)
 	if err == sql.ErrNoRows {
 		return &apiError{
-			Tag:     "author.noRows",
-			Error:   err,
-			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
-			Code:    http.StatusNoContent,
+			"randomHandler.StatementAuthorById.QueryRow.sql.ErrNoRows",
+			err,
+			"Author not found",
+			http.StatusNotFound,
 		}
 	}
 	if err != nil {
 		return &apiError{
-			Tag:     "author.err!=nil",
-			Error:   err,
-			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
-			Code:    http.StatusNoContent,
+			"randomHandler.StatementAuthorById.QueryRow.Err",
+			err,
+			"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			http.StatusInternalServerError,
 		}
 	}
 
 	author.Id = author_id
+	author.Name = name.String
 	if avatar_url.Valid {
 		author.AvatarUrl = avatar_url.String
 	} else {
 		author.AvatarUrl = ""
-	}
-	if name.Valid {
-		author.Name = name.String
 	}
 	if company_name.Valid {
 		author.Company = company_name.String
@@ -190,24 +188,24 @@ func randomHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtil
 
 	// get the tag ids
 	var tag_ids []int
-	rows, err := dbUtils.StatementTagsByQuoteId.Query(quote_id)
+	tagIdsRows, err := dbUtils.StatementTagIdsByQuoteId.Query(quote_id)
 	if err != nil {
 		return &apiError{
-			Tag:     "tags.rowsErr",
-			Error:   err,
-			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
-			Code:    http.StatusNoContent,
+			"randomHandler.tagIdsRows.Err",
+			err,
+			"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			http.StatusInternalServerError,
 		}
 	}
-	defer rows.Close()
-	for rows.Next() {
+	defer tagIdsRows.Close()
+	for tagIdsRows.Next() {
 		var tag_id int
-		if err := rows.Scan(&tag_id); err != nil {
+		if err := tagIdsRows.Scan(&tag_id); err != nil {
 			return &apiError{
-				Tag:     "tag.rows.Scan",
-				Error:   err,
-				Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
-				Code:    http.StatusNoContent,
+				"randomHandler.tagIdsRows.Scan.Err",
+				err,
+				"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+				http.StatusInternalServerError,
 			}
 		}
 		tag_ids = append(tag_ids, tag_id)
@@ -222,18 +220,18 @@ func randomHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtil
 		err := dbUtils.StatementTagById.QueryRow(tag_id).Scan(&mtag_id, &mtag_label)
 		if err == sql.ErrNoRows {
 			return &apiError{
-				Tag:     "mtag.noRows",
-				Error:   err,
-				Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
-				Code:    http.StatusNoContent,
+				"randomHandler.StatementTagById.QueryRow.sql.ErrNoRows",
+				err,
+				"Tag not found",
+				http.StatusNotFound,
 			}
 		}
 		if err != nil {
 			return &apiError{
-				Tag:     "mtag.err!=nil",
-				Error:   err,
-				Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
-				Code:    http.StatusNoContent,
+				"randomHandler.StatementTagById.QueryRow.Err",
+				err,
+				"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+				http.StatusInternalServerError,
 			}
 		}
 		tag.Id = mtag_id
@@ -245,14 +243,13 @@ func randomHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtil
 	// write json to response
 	// response JSON
 	randomResp := json.NewEncoder(w)
-	random_err_json := randomResp.Encode(quote)
-	if random_err_json != nil {
-		log.Println("Encode JSON for error response was failed.")
+	err = randomResp.Encode(quote)
+	if err != nil {
 		return &apiError{
-			Tag:     "random_err_json.err!=nil",
-			Error:   err,
-			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
-			Code:    http.StatusNoContent,
+			"randomHandler.randomResp.Err",
+			err,
+			"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			http.StatusInternalServerError,
 		}
 	}
 	return nil
@@ -265,10 +262,10 @@ func authorsHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUti
 	authorsRows, err := dbUtils.StatementAuthors.Query()
 	if err != nil {
 		return &apiError{
-			Tag:     "authorRows.rowsErr",
-			Error:   err,
-			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
-			Code:    http.StatusNoContent,
+			"authorsHandler.authorsRows.Err",
+			err,
+			"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			http.StatusInternalServerError,
 		}
 	}
 	defer authorsRows.Close()
@@ -278,20 +275,18 @@ func authorsHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUti
 		var avatar_url, name, company_name, twitter_username sql.NullString
 		if err := authorsRows.Scan(&author_id, &avatar_url, &name, &company_name, &twitter_username); err != nil {
 			return &apiError{
-				Tag:     "authorRows.Scan",
-				Error:   err,
-				Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
-				Code:    http.StatusNoContent,
+				"authorsHandler.authorsRows.Scan.Err",
+				err,
+				"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+				http.StatusInternalServerError,
 			}
 		}
 		author.Id = author_id
+		author.Name = name.String
 		if avatar_url.Valid {
 			author.AvatarUrl = avatar_url.String
 		} else {
 			author.AvatarUrl = ""
-		}
-		if name.Valid {
-			author.Name = name.String
 		}
 		if company_name.Valid {
 			author.Company = company_name.String
@@ -308,14 +303,18 @@ func authorsHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUti
 
 	// response json
 	authorsResp := json.NewEncoder(w)
-	authors_err_json := authorsResp.Encode(authors)
-	if authors_err_json != nil {
-		log.Println("Encode JSON for error response was failed.")
+	err = authorsResp.Encode(authors)
+	if err != nil {
 		return &apiError{
-			Tag:     "authors_err_json.err!=nil",
-			Error:   err,
-			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
-			Code:    http.StatusNoContent,
+			"authorsHandler.authorsResp.Err",
+			err,
+			"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			http.StatusInternalServerError,
+		}
+	}
+	return nil
+}
+
 		}
 	}
 	return nil
@@ -353,7 +352,7 @@ func main() {
 		log.Println(err)
 	}
 
-	stmtQueryTagsByQuoteId, err := db.Prepare("SELECT tag_id FROM quotes_tags WHERE quote_id = $1")
+	stmtQueryTagIdsByQuoteId, err := db.Prepare("SELECT tag_id FROM quotes_tags WHERE quote_id = $1")
 	if err != nil {
 		log.Println(err)
 	}
@@ -364,10 +363,10 @@ func main() {
 	}
 
 	randomDBUtils := &DatabaseUtils{
-		StatementRandom:        stmtQueryRandomQuote,
-		StatementAuthorById:    stmtQueryAuthor,
-		StatementTagsByQuoteId: stmtQueryTagsByQuoteId,
-		StatementTagById:       stmtQueryTagById,
+		StatementRandom:          stmtQueryRandomQuote,
+		StatementAuthorById:      stmtQueryAuthor,
+		StatementTagIdsByQuoteId: stmtQueryTagIdsByQuoteId,
+		StatementTagById:         stmtQueryTagById,
 	}
 	r.Handle("/v1/random", ApiHandler{randomDBUtils, randomHandler})
 
