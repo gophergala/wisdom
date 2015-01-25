@@ -50,12 +50,14 @@ type apiError struct {
 
 // DatabaseUtils represent database utility that used by handler
 type DatabaseUtils struct {
-	DB                     *sql.DB
-	StatementRandom        *sql.Stmt
-	StatementAuthorById    *sql.Stmt
-	StatementTagsByQuoteId *sql.Stmt
-	StatementTagById       *sql.Stmt
-	StatementAuthors       *sql.Stmt
+	DB                               *sql.DB
+	StatementRandom                  *sql.Stmt
+	StatementAuthorById              *sql.Stmt
+	StatementTagIdsByQuoteId         *sql.Stmt
+	StatementTagById                 *sql.Stmt
+	StatementAuthors                 *sql.Stmt
+	StatementAuthorByTwitterUsername *sql.Stmt
+	StatementQuotesByAuthorId        *sql.Stmt
 }
 
 // ApiHandler global API mux
@@ -315,6 +317,151 @@ func authorsHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUti
 	return nil
 }
 
+func authorTwitterHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtils) *apiError {
+	// get the parameter
+	vars := mux.Vars(r)
+	twitter_username := vars["twitter_username"]
+
+	// get the author
+	var author Author
+	var author_id int
+	var avatar_url, name, company_name, author_twitter_username sql.NullString
+	err := dbUtils.StatementAuthorByTwitterUsername.QueryRow(twitter_username).Scan(&author_id, &avatar_url, &name, &company_name, &author_twitter_username)
+	if err == sql.ErrNoRows {
+		return &apiError{
+			"authorTwitterHandler.sql.ErrNoRows",
+			err,
+			"Author not found",
+			http.StatusNotFound,
+		}
+	}
+	if err != nil {
+		return &apiError{
+			"authorTwitterHandler.err!=nil",
+			err,
+			"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			http.StatusInternalServerError,
+		}
+	}
+
+	author.Id = author_id
+	author.Name = name.String
+	if avatar_url.Valid {
+		author.AvatarUrl = avatar_url.String
+	} else {
+		author.AvatarUrl = ""
+	}
+	if company_name.Valid {
+		author.Company = company_name.String
+	} else {
+		author.Company = ""
+	}
+	if author_twitter_username.Valid {
+		author.Twitter = author_twitter_username.String
+	} else {
+		author.Twitter = ""
+	}
+
+	// get the quotes
+	var quotes []*Quote
+	quotesRows, err := dbUtils.StatementQuotesByAuthorId.Query(author_id)
+	if err != nil {
+		return &apiError{
+			"authorTwitterHandler.quotesRows.err!=nil",
+			err,
+			"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			http.StatusInternalServerError,
+		}
+	}
+	defer quotesRows.Close()
+	for quotesRows.Next() {
+		// get the quote
+		var quote_id, quote_author_id int
+		var post_id, content, permalink, picture_url string
+		if err := quotesRows.Scan(&quote_id, &quote_author_id, &post_id, &content, &permalink, &picture_url); err != nil {
+			return &apiError{
+				"authorTwitterHandler.quotesRows.Scan",
+				err,
+				"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+				http.StatusInternalServerError,
+			}
+		}
+
+		quote := &Quote{
+			Id:         quote_id,
+			PostId:     post_id,
+			Content:    content,
+			Permalink:  permalink,
+			PictureUrl: picture_url,
+		}
+
+		// get the tag ids
+		var tag_ids []int
+		tagIdsRows, err := dbUtils.StatementTagIdsByQuoteId.Query(quote.Id)
+		if err != nil {
+			return &apiError{
+				"authorTwitterHandler.tagIdsRows.err!=nil",
+				err,
+				"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+				http.StatusInternalServerError,
+			}
+		}
+		defer tagIdsRows.Close()
+		for tagIdsRows.Next() {
+			var tag_id int
+			if err := tagIdsRows.Scan(&tag_id); err != nil {
+				return &apiError{
+					"authorTwitterHandler.tagIdsRows.Scan",
+					err,
+					"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+					http.StatusInternalServerError,
+				}
+			}
+			tag_ids = append(tag_ids, tag_id)
+		}
+
+		// get the tags
+		var tags []Tag
+		for _, tag_id := range tag_ids {
+			var tag Tag
+			var mtag_id int
+			var mtag_label string
+			err := dbUtils.StatementTagById.QueryRow(tag_id).Scan(&mtag_id, &mtag_label)
+			if err == sql.ErrNoRows {
+				return &apiError{
+					"authorTwitterHandler.tagIdsRows.StatementTagById.sql.ErrNoRows",
+					err,
+					"Author not found",
+					http.StatusNotFound,
+				}
+			}
+			if err != nil {
+				return &apiError{
+					"authorTwitterHandler.tagIdsRows.StatementTagById.Err",
+					err,
+					"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+					http.StatusInternalServerError,
+				}
+			}
+			tag.Id = mtag_id
+			tag.Label = mtag_label
+			tags = append(tags, tag)
+		}
+
+		quote.Tags = tags
+		quote.Author = author
+		quotes = append(quotes, quote)
+	}
+
+	// response JSON
+	quotesResp := json.NewEncoder(w)
+	err = quotesResp.Encode(quotes)
+	if err != nil {
+		return &apiError{
+			"authorTwitterHandler.quotesResp.Err",
+			err,
+			"OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			http.StatusInternalServerError,
 		}
 	}
 	return nil
@@ -381,6 +528,25 @@ func main() {
 	}
 
 	r.Handle("/v1/authors", ApiHandler{authorsDBUtils, authorsHandler})
+
+	// /v1/author/twitter_username handler
+	stmtQueryAuthorByTwitterUsername, err := db.Prepare("SELECT * FROM authors WHERE twitter_username = $1")
+	if err != nil {
+		log.Println(err)
+	}
+
+	stmtQueryQuotesByAuthorId, err := db.Prepare("SELECT * FROM quotes WHERE author_id = $1")
+	if err != nil {
+		log.Println(err)
+	}
+
+	authorTwitterDBUtils := &DatabaseUtils{
+		StatementAuthorByTwitterUsername: stmtQueryAuthorByTwitterUsername,
+		StatementQuotesByAuthorId:        stmtQueryQuotesByAuthorId,
+		StatementTagIdsByQuoteId:         stmtQueryTagIdsByQuoteId,
+		StatementTagById:                 stmtQueryTagById,
+	}
+	r.Handle("/v1/author/{twitter_username}", ApiHandler{authorTwitterDBUtils, authorTwitterHandler})
 
 	// not found handler
 	r.NotFoundHandler = ApiHandler{Handler: notFoundHandler}
