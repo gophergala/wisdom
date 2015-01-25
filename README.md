@@ -55,6 +55,15 @@ that can resused by developer inside their apps.
 }
 ```
 
+`tag` has the following form
+
+```json
+{
+    "id": 1,
+    "label": "launch"
+}
+```
+
 ### Random
 
 | Endpoint  | Description |
@@ -73,7 +82,7 @@ GET https://wisdomapi.herokuapp.com/v1/random
 | --------- | ------ |
 | `/v1/authors` | return an array of `author`|
 | `/v1/author/:twitter_username` | return an array of `quote` by author that have given `:twitter_username`. If author doesn't have twitter account response will be 404|
-| `/v1/author/:twitter_username/random` | return a random `quote` by authot that have given `:twitter_username`. If author only have 1 quote the response will be exactly the same, not random.|
+| `/v1/author/:twitter_username/random` | return a random `quote` by author that have given `:twitter_username`. If author only have 1 quote the response will be exactly the same, not random.|
 
 `:twitter_username` is a string
 
@@ -91,14 +100,15 @@ GET https://wisdomapi.herokuapp.com/v1/author/paulg/random
 ```
 
 
-### Tag
+### Tags
 
 | Endpoint  | Description |
 | --------- | ------ |
 | `/v1/tags` | return an array of `tags`|
-| `/v1/tags/:tags` | return an array of `object` that have given `:tags`|
-| `/v1/tags/:tags/random` | return a random `object` that have given `:tags`|
 
-`:tags` is a string or comma separated string.
+#### Example request
 
-TODO: add example of tag response
+```
+# List of tags
+GET https://wisdomapi.herokuapp.com/v1/tags
+```
