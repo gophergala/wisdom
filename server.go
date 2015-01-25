@@ -54,6 +54,7 @@ type DatabaseUtils struct {
 	StatementAuthorById    *sql.Stmt
 	StatementTagsByQuoteId *sql.Stmt
 	StatementTagById       *sql.Stmt
+	StatementAuthors       *sql.Stmt
 }
 
 // ApiHandler global API mux
@@ -258,6 +259,69 @@ func randomHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtil
 	return nil
 }
 
+// /v1/authors endpoint. return an array of authors
+func authorsHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtils) *apiError {
+	// get the rows
+	var authors []Author
+	authorsRows, err := dbUtils.StatementAuthors.Query()
+	if err != nil {
+		return &apiError{
+			Tag:     "authorRows.rowsErr",
+			Error:   err,
+			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			Code:    http.StatusNoContent,
+		}
+	}
+	defer authorsRows.Close()
+	for authorsRows.Next() {
+		var author Author
+		var author_id int
+		var avatar_url, name, company_name, twitter_username sql.NullString
+		if err := authorsRows.Scan(&author_id, &avatar_url, &name, &company_name, &twitter_username); err != nil {
+			return &apiError{
+				Tag:     "authorRows.Scan",
+				Error:   err,
+				Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+				Code:    http.StatusNoContent,
+			}
+		}
+		author.Id = author_id
+		if avatar_url.Valid {
+			author.AvatarUrl = avatar_url.String
+		} else {
+			author.AvatarUrl = ""
+		}
+		if name.Valid {
+			author.Name = name.String
+		}
+		if company_name.Valid {
+			author.Company = company_name.String
+		} else {
+			author.Company = ""
+		}
+		if twitter_username.Valid {
+			author.Twitter = twitter_username.String
+		} else {
+			author.Twitter = ""
+		}
+		authors = append(authors, author)
+	}
+
+	// response json
+	authorsResp := json.NewEncoder(w)
+	authors_err_json := authorsResp.Encode(authors)
+	if authors_err_json != nil {
+		log.Println("Encode JSON for error response was failed.")
+		return &apiError{
+			Tag:     "authors_err_json.err!=nil",
+			Error:   err,
+			Message: "OOOOOPPPSSSS! error happen. don't panic! we will be back soon :)",
+			Code:    http.StatusNoContent,
+		}
+	}
+	return nil
+}
+
 func main() {
 	log.Println("Opening connection to database ... ")
 	db, err := sql.Open("postgres", DATABASE_URL)
@@ -306,6 +370,18 @@ func main() {
 		StatementTagById:       stmtQueryTagById,
 	}
 	http.Handle("/v1/random", ApiHandler{randomDBUtils, randomHandler})
+
+	// Authors handler
+	stmtQueryAuthors, err := db.Prepare("SELECT * FROM authors")
+	if err != nil {
+		log.Println(err)
+	}
+
+	authorsDBUtils := &DatabaseUtils{
+		StatementAuthors: stmtQueryAuthors,
+	}
+
+	http.Handle("/v1/authors", ApiHandler{authorsDBUtils, authorsHandler})
 
 	// server listener
 	log.Printf("Listening on :%s", PORT)
