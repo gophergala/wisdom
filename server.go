@@ -16,6 +16,29 @@ var (
 	DATABASE_URL = os.Getenv("DATABASE_URL")
 )
 
+type Author struct {
+	Id        int    `json:"id"`
+	AvatarUrl string `json:"avatar_url"`
+	Name      string `json:"name"`
+	Company   string `json:"company"`
+	Twitter   string `json:"twitter_username"`
+}
+
+type Tag struct {
+	Id    int    `json:"id"`
+	Label string `json:"label"`
+}
+
+type Quote struct {
+	Id         int    `json:"id"`
+	PostId     string `json:"post_id"`
+	Author     Author `json:"author"`
+	Content    string `json:"content"`
+	Permalink  string `json:"permalink"`
+	PictureUrl string `json:"picture_url"`
+	Tags       []Tag  `json:"tags"`
+}
+
 // apiError define structure of API error
 type apiError struct {
 	Tag     string `json:"-"`
