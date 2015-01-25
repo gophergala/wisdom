@@ -145,6 +145,7 @@ func randomHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtil
 	}
 
 	// get the author
+	var author Author
 	var author_id int
 	var avatar_url, name, company_name, twitter_username sql.NullString
 	err = dbUtils.StatementAuthorById.QueryRow(quote_author_id).Scan(&author_id, &avatar_url, &name, &company_name, &twitter_username)
@@ -165,7 +166,7 @@ func randomHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtil
 		}
 	}
 
-	author := Author{}
+	author.Id = author_id
 	if avatar_url.Valid {
 		author.AvatarUrl = avatar_url.String
 	} else {
