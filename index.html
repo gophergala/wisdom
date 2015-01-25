@@ -91,6 +91,15 @@
                 $.getJSON(randomendpoint, {})
                     .done(function(data){
                         console.log(data)
+                        var authorName = $("p.author-name");
+                        var companyName = $("p.company-name");
+                        var content = $("h1.quote-content");
+                        var permalink = $("a.quote-permalink");
+
+                        authorName.text(data.author.name);
+                        companyName.text(data.author.company_name);
+                        content.text(data.content);
+                        permalink.attr("href", data.permalink);
                     });
             })()
         </script>
