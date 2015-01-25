@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
 
@@ -98,20 +99,18 @@ func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // redirect to github pages
 func indexHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtils) *apiError {
-
-	// response "404 not found" on every undefined
-	// URL pattern handler
-	if r.URL.Path != "/" {
-		return &apiError{
-			"indexHandler url",
-			errors.New("Not Found"),
-			"Not Found",
-			http.StatusNotFound,
-		}
-	}
-
 	http.Redirect(w, r, "http://gophergala.github.io/wisdom", 302)
 	return nil
+}
+
+// redirect to github pages
+func notFoundHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtils) *apiError {
+	return &apiError{
+		"notFoundHandler",
+		errors.New("Not Found"),
+		"Not Found",
+		http.StatusNotFound,
+	}
 }
 
 // response random quotes
@@ -338,8 +337,9 @@ func main() {
 	}
 	log.Println("Ping database connection: success!")
 
+	r := mux.NewRouter()
 	// index handler doesn't need database utils
-	http.Handle("/", ApiHandler{Handler: indexHandler})
+	r.Handle("/", ApiHandler{Handler: indexHandler})
 
 	// Random handler
 	// prepare a statement
@@ -369,7 +369,7 @@ func main() {
 		StatementTagsByQuoteId: stmtQueryTagsByQuoteId,
 		StatementTagById:       stmtQueryTagById,
 	}
-	http.Handle("/v1/random", ApiHandler{randomDBUtils, randomHandler})
+	r.Handle("/v1/random", ApiHandler{randomDBUtils, randomHandler})
 
 	// Authors handler
 	stmtQueryAuthors, err := db.Prepare("SELECT * FROM authors")
@@ -381,9 +381,12 @@ func main() {
 		StatementAuthors: stmtQueryAuthors,
 	}
 
-	http.Handle("/v1/authors", ApiHandler{authorsDBUtils, authorsHandler})
+	r.Handle("/v1/authors", ApiHandler{authorsDBUtils, authorsHandler})
 
+	// not found handler
+	r.NotFoundHandler = ApiHandler{Handler: notFoundHandler}
 	// server listener
+	http.Handle("/", r)
 	log.Printf("Listening on :%s", PORT)
 	log.Fatal(http.ListenAndServe(":"+PORT, nil))
 }
