@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -23,20 +24,30 @@ type apiError struct {
 	Code    int    `json:"code"`
 }
 
+// DatabaseUtils represent database utility that used by handler
+type DatabaseUtils struct {
+	DB                     *sql.DB
+	StatementRandom        *sql.Stmt
+	StatementAuthorById    *sql.Stmt
+	StatementTagsByQuoteId *sql.Stmt
+	StatementTagById       *sql.Stmt
+}
+
 // ApiHandler global API mux
 type ApiHandler struct {
-	DB      *sql.DB
-	Handler func(w http.ResponseWriter, r *http.Request, db *sql.DB) *apiError
+	DBUtils *DatabaseUtils
+	Handler func(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtils) *apiError
 }
 
 func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// add header on every response
-	w.Header().Add("Server", "Automata/0.1")
+	w.Header().Add("Server", "Wisdom powered by Gophergala")
+	w.Header().Add("X-Wisdom-Media-Type", "wisdom.V1")
 	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 
 	// if handler return an &apiError
-	err := api.Handler(w, r, api.DB)
+	err := api.Handler(w, r, api.DBUtils)
 	if err != nil {
 		// http log
 		log.Printf("%s %s %s [%s] %s", r.RemoteAddr, r.Method, r.URL, err.Tag, err.Error)
@@ -62,7 +73,19 @@ func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // redirect to github pages
-func indexHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) *apiError {
+func indexHandler(w http.ResponseWriter, r *http.Request, dbUtils *DatabaseUtils) *apiError {
+
+	// response "404 not found" on every undefined
+	// URL pattern handler
+	if r.URL.Path != "/" {
+		return &apiError{
+			"indexHandler url",
+			errors.New("Not Found"),
+			"Not Found",
+			http.StatusNotFound,
+		}
+	}
+
 	http.Redirect(w, r, "http://gophergala.github.io/wisdom", 302)
 	return nil
 }
@@ -83,8 +106,8 @@ func main() {
 	}
 	log.Println("Ping database connection: success!")
 
-	// index handler
-	http.Handle("/", ApiHandler{db, indexHandler})
+	// index handler doesn't need database utils
+	http.Handle("/", ApiHandler{Handler: indexHandler})
 
 	// server listener
 	log.Printf("Listening on :%s", PORT)
