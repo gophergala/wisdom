@@ -39,8 +39,52 @@ every `object` quote has the following form
 | --------- | ------ |
 | `/v1/random` | return a random `object`|
 
-TODO: add example of random response
+example valid request are:
 
+```
+$ curl -i -H "Accept: application/json" -X GET https://wisdomapi.herokuapp.com/v1/random
+HTTP/1.1 200 OK
+Connection: keep-alive
+Content-Type: application/json; charset=utf-8
+Server: Wisdom powered by Gophergala
+X-Wisdom-Media-Type: wisdom.V1
+Date: Sun, 25 Jan 2015 12:55:32 GMT
+Content-Length: 620
+Via: 1.1 vegur
+
+{
+    "id":17,
+    "post_id":"81784898975",
+    "author":{
+        "id":0,
+        "avatar_url":"",
+        "name":"Steve Jobs",
+        "company":"Apple",
+        "twitter_username":""
+    },
+    "content":"Your work is going to fill a large part of your life, and the only way to be truly satisfied is to do what you believe is great work. And the only way to do great work is to love what you do.",
+    "permalink":"http://startupquote.com/post/81784898975",
+    "picture_url":"http://41.media.tumblr.com/0915e5401eb9a4e0e01e27c525198562/tumblr_n3keo0aVDc1qz6pqio1_r1_1280.png",
+    "tags":[
+        {"
+            id":23,
+            "label":"classic"
+        },
+        {
+            "id":29,
+            "label":"work"
+        },
+        {
+            "id":31,
+            "label":"life"
+        },
+        {
+            "id":32,
+            "label":"enthusiasm"
+        }
+    ]
+}
+```
 
 ### Post
 
