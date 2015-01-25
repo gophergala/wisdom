@@ -87,7 +87,7 @@
         <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
         <script type="text/javascript">
             (function(){
-                var randomendpoint = "https://wisdomapi.herokuapp.com/v1/random"
+                var randomendpoint = "https://wisdomapi.herokuapp.com/v1/random?jsonp=?"
                 $.getJSON(randomendpoint, {})
                     .done(function(data){
                         console.log(data)
