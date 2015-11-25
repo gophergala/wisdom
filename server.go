@@ -73,6 +73,7 @@ type ApiHandler struct {
 func (api ApiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// add header on every response
+	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Server", "Wisdom powered by Gophergala")
 	w.Header().Add("X-Wisdom-Media-Type", "wisdom.V1")
 	w.Header().Add("Content-Type", "application/json; charset=utf-8")
